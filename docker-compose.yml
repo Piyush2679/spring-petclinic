@@ -1,21 +1,18 @@
 services:
-  mysql:
-    image: mysql:9.2
+  app:
+    image: piyushinsys/petclinic:latest
     ports:
-      - "3306:3306"
+      - "8080:8080"
+    networks:
+      - app_net
+  db:
+    image: mysql:8.0
     environment:
-      - MYSQL_ROOT_PASSWORD=
-      - MYSQL_ALLOW_EMPTY_PASSWORD=true
-      - MYSQL_USER=petclinic
-      - MYSQL_PASSWORD=petclinic
-      - MYSQL_DATABASE=petclinic
-    volumes:
-      - "./conf.d:/etc/mysql/conf.d:ro"
-  postgres:
-    image: postgres:18.0
-    ports:
-      - "5432:5432"
-    environment:
-      - POSTGRES_PASSWORD=petclinic
-      - POSTGRES_USER=petclinic
-      - POSTGRES_DB=petclinic
+      MYSQL_ROOT_PASSWORD: root
+    networks:
+      - app_net
+
+networks:
+  app_net:
+    driver: bridge
+

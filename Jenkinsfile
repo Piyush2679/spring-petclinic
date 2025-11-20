@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        DOCKERHUB_CREDENTIALS = dockerhub-practice-id
+        DOCKERHUB_CREDENTIALS = "dockerhub-practice-id"
         IMAGE_NAME = "piyushinsys/petclinic"
         BRANCH = "main"
     }

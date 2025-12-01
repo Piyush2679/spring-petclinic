@@ -1,59 +1,70 @@
 pipeline {
-  agent any
+    agent any
 
-  environment {
-    DOCKERHUB_CREDENTIALS = "dockerhub-practice-id" 
-    IMAGE_NAME = "piyushinsys/petclinic"
-    BRANCH = "main"
-  }
-
-  stages {
-    stage('Clone Repo') {
-      steps {
-        git branch: "${BRANCH}", url: 'https://github.com/Piyush2679/spring-petclinic.git'
-      }
+    environment {
+        DOCKER_IMAGE = "piyushinsys/petclinic"
+        DOCKERHUB_CRED = "dockerhub-practice-id"
+        GIT_BRANCH = "main"
     }
 
-    stage('Build Docker Image') {
-      steps {
-        sh '''
-          docker build -t ${IMAGE_NAME}:${BUILD_NUMBER} .
-          docker tag ${IMAGE_NAME}:${BUILD_NUMBER} ${IMAGE_NAME}:latest
-        '''
-      }
-    }
+    stages {
 
-    // Optional debug stage — uncomment to test credentials injection (safe: password length only)
-    // stage('Debug: Check Credentials Binding') {
-    //   steps {
-    //     withCredentials([usernamePassword(credentialsId: "${DOCKERHUB_CREDENTIALS}", usernameVariable: 'DOCKERHUB_USER', passwordVariable: 'DOCKERHUB_PASS')]) {
-    //       sh 'echo "Docker Hub user: $DOCKERHUB_USER"; echo "Password length: $(echo -n $DOCKERHUB_PASS | wc -c)"'
-    //     }
-    //   }
-    // }
-
-    stage('Push to Docker Hub') {
-      steps {
-        // securely bind username/password for the duration of the block
-        withCredentials([usernamePassword(credentialsId: "${DOCKERHUB_CREDENTIALS}", usernameVariable: 'DOCKERHUB_USER', passwordVariable: 'DOCKERHUB_PASS')]) {
-          sh '''
-            echo "Logging in to Docker Hub as $DOCKERHUB_USER"
-            echo "$DOCKERHUB_PASS" | docker login -u "$DOCKERHUB_USER" --password-stdin
-            docker push ${IMAGE_NAME}:latest
-          '''
+        stage('Checkout Code') {
+            steps {
+                echo "Checking out code from GitHub..."
+                git branch: "${GIT_BRANCH}", url: "https://github.com/Piyush2679/spring-petclinic.git"
+            }
         }
-      }
+
+        stage('Build Jar with Maven') {
+            steps {
+                echo "Running mvn clean package..."
+                sh 'mvn clean package -DskipTests'
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                echo "Building docker image..."
+                sh """
+                    docker build -t ${DOCKER_IMAGE}:${BUILD_NUMBER} .
+                    docker tag ${DOCKER_IMAGE}:${BUILD_NUMBER} ${DOCKER_IMAGE}:latest
+                """
+            }
+        }
+
+        stage('Login and Push to Docker Hub') {
+            steps {
+                echo "Login to docker hub and pushing image..."
+                withCredentials([usernamePassword(
+                    credentialsId: "${DOCKERHUB_CRED}",
+                    usernameVariable: 'DOCKER_USER',
+                    passwordVariable: 'DOCKER_PASS'
+                )]) {
+                    sh '''
+                        echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+                        docker push '"${DOCKER_IMAGE}"':'"${BUILD_NUMBER}"'
+                        docker push '"${DOCKER_IMAGE}"':latest
+                    '''
+                }
+            }
+        }
+
+        stage('Deploy using Docker Compose') {
+            steps {
+                echo "Deploying with docker-compose..."
+                sh '''
+                    docker-compose down || true
+                    docker-compose pull
+                    docker-compose up -d
+                '''
+            }
+        }
     }
 
-    stage('Deploy with Docker Compose') {
-      steps {
-        sh '''
-          # avoid failing deploy stage if containers aren't running yet
-          docker-compose down || true
-          docker-compose pull || true
-          docker-compose up -d
-        '''
-      }
+    post {
+        always {
+            echo "Build finished. Build number: ${BUILD_NUMBER}"
+        }
     }
-  }
 }

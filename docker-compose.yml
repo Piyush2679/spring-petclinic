@@ -1,18 +1,42 @@
+version: "3.8"
+
 services:
   app:
     image: piyushinsys/petclinic:latest
+    container_name: petclinic_app
+    build:
+      context: .
+      dockerfile: Dockerfile
     ports:
-      - "8081:8080"
+      - "8081:8080"   
+    environment:
+      - SPRING_PROFILES_ACTIVE=mysql
+      - SPRING_DATASOURCE_URL=jdbc:mysql://db:3306/petclinic
+      - SPRING_DATASOURCE_USERNAME=petclinic
+      - SPRING_DATASOURCE_PASSWORD=petclinic
+    depends_on:
+      - db
     networks:
-      - app_net
+      - petclinic_net
+
   db:
     image: mysql:8.0
+    container_name: petclinic_db
     environment:
       MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: petclinic
+      MYSQL_USER: petclinic
+      MYSQL_PASSWORD: petclinic
+    ports:
+      - "3307:3306"
+    volumes:
+      - db_data:/var/lib/mysql
     networks:
-      - app_net
+      - petclinic_net
 
 networks:
-  app_net:
-    driver: bridge
+  petclinic_net:
+    driver: bridge   
 
+volumes:
+  db_data:

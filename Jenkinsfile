@@ -19,7 +19,7 @@ pipeline {
         stage('Build Jar with Maven') {
             steps {
                 echo "Running mvn clean package..."
-                sh 'mvn clean package -DskipTests'
+                sh './mvnw clean package -DskipTests'
             }
         }
 

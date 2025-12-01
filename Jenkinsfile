@@ -2,9 +2,9 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_IMAGE = "piyushinsys/petclinic"
+        DOCKER_IMAGE   = "piyushinsys/petclinic"
         DOCKERHUB_CRED = "dockerhub-practice-id"
-        GIT_BRANCH = "main"
+        GIT_BRANCH     = "main"
     }
 
     stages {
@@ -16,16 +16,9 @@ pipeline {
             }
         }
 
-        stage('Build Jar with Maven') {
-            steps {
-                echo "Running mvn clean package..."
-                sh './mvnw clean package -DskipTests'
-            }
-        }
-
         stage('Build Docker Image') {
             steps {
-                echo "Building docker image..."
+                echo "Building Docker image (multi-stage will build jar inside Docker)..."
                 sh """
                     docker build -t ${DOCKER_IMAGE}:${BUILD_NUMBER} .
                     docker tag ${DOCKER_IMAGE}:${BUILD_NUMBER} ${DOCKER_IMAGE}:latest
@@ -35,7 +28,7 @@ pipeline {
 
         stage('Login and Push to Docker Hub') {
             steps {
-                echo "Login to docker hub and pushing image..."
+                echo "Login to Docker Hub and pushing image..."
                 withCredentials([usernamePassword(
                     credentialsId: "${DOCKERHUB_CRED}",
                     usernameVariable: 'DOCKER_USER',

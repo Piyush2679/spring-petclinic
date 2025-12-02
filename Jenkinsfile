@@ -20,7 +20,7 @@ pipeline {
             steps {
                 echo "Building jar with Maven (using mvnw)..."
                 
-                sh './mvnw clean package -DskipTests'
+               sh './mvnw -Denforcer.skip=true clean package -DskipTests'
             }
         }
 

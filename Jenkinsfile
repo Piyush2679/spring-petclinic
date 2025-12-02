@@ -16,9 +16,17 @@ pipeline {
             }
         }
 
+        stage('Build Jar with Maven') {
+            steps {
+                echo "Building jar with Maven (using mvnw)..."
+                
+                sh './mvnw clean package -DskipTests'
+            }
+        }
+
         stage('Build Docker Image') {
             steps {
-                echo "Building Docker image (multi-stage will build jar inside Docker)..."
+                echo "Building Docker image using multi-stage Dockerfile..."
                 sh """
                     docker build -t ${DOCKER_IMAGE}:${BUILD_NUMBER} .
                     docker tag ${DOCKER_IMAGE}:${BUILD_NUMBER} ${DOCKER_IMAGE}:latest
@@ -45,7 +53,7 @@ pipeline {
 
         stage('Deploy using Docker Compose') {
             steps {
-                echo "Deploying with docker-compose..."
+                echo "Deploying containers with docker-compose..."
                 sh '''
                     docker-compose down || true
                     docker-compose pull

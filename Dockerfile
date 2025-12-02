@@ -1,25 +1,17 @@
 FROM eclipse-temurin:17-jdk AS builder
 
-WORKDIR /app
+WORKDIR /build
 
-RUN apt-get update && apt-get install -y maven && rm -rf /var/lib/apt/lists/*
-
-COPY pom.xml .
-
-RUN mvn -B -Denforcer.skip=true dependency:go-offline
-
-COPY src ./src
-
-RUN mvn -B -Denforcer.skip=true clean package -DskipTests
+COPY target/*.jar app.jar
 
 
-FROM eclipse-temurin:17-jdk
+FROM eclipse-temurin:17-jre-jammy
 
 WORKDIR /app
 
 RUN useradd -m appuser
 
-COPY --from=builder /app/target/*.jar app.jar
+COPY --from=builder /build/app.jar app.jar
 
 EXPOSE 8080
 

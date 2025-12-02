@@ -35,21 +35,22 @@
         }
 
         stage('Login and Push to Docker Hub') {
-            steps {
-                echo "Login to Docker Hub and pushing image..."
-                withCredentials([usernamePassword(
-                    credentialsId: "${DOCKERHUB_CRED}",
-                    usernameVariable: 'DOCKER_USER',
-                    passwordVariable: 'DOCKER_PASS'
-                )]) {
-                    sh """
-                        echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
-                        docker push '"${DOCKER_IMAGE}"':'"${BUILD_NUMBER}"'
-                        docker push '"${DOCKER_IMAGE}"':latest
-                    """
-                }
-            }
+    steps {
+        echo 'Login to Docker Hub and pushing image...'
+        withCredentials([usernamePassword(
+            credentialsId: "${DOCKERHUB_CRED}",
+            usernameVariable: 'DOCKER_USER',
+            passwordVariable: 'DOCKER_PASS'
+        )]) {
+            sh '''
+                echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+                docker push "$DOCKER_IMAGE:$BUILD_NUMBER"
+                docker push "$DOCKER_IMAGE:latest"
+            '''
         }
+    }
+}
+
 
         stage('Deploy using Docker Compose') {
             steps {

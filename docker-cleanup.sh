@@ -1,16 +1,19 @@
-#!/usr/bin/env bash
-set -euo pipefail
-AGGRESSIVE=false
-if [[ "${1:-}" == "--aggressive" ]]; then AGGRESSIVE=true; fi
-echo "Removing exited containers..."
-docker ps -a -f "status=exited" -q | xargs -r docker rm
-echo "Removing dangling images..."
-docker images -f "dangling=true" -q | xargs -r docker rmi || true
-if $AGGRESSIVE; then
-  docker image prune -a -f
-  docker volume prune -f
-  docker network prune -f
-else
-  docker system prune -f
-fi
-echo "Done."
+#!/usr/bin/bash
+
+echo "Cleaning up unused Docker resources..."
+
+
+echo "Removing stopped containers..."
+docker container prune -f
+
+
+echo "Removing unused images..."
+docker image prune -a -f
+
+echo "Removing unused networks..."
+docker network prune -f
+
+echo "Removing unused volumes..."
+docker volume prune -f
+
+echo "Docker cleanup completed."
